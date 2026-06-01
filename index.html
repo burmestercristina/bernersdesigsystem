@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Berners Ads — DS Component Audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #0e0e0e;
+    --white: #fafafa;
+    --gray-50: #f5f5f3;
+    --gray-100: #ebebea;
+    --gray-300: #c8c8c5;
+    --gray-500: #8a8a86;
+    --gray-700: #4a4a47;
+    --accent: #1a56ff;
+    --accent-light: #e8eeff;
+    --warn: #e67e00;
+    --warn-light: #fff3e0;
+    --danger: #d42b2b;
+    --danger-light: #fdeaea;
+    --success: #1a8a4a;
+    --success-light: #e6f5ec;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--white);
+    color: var(--black);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--gray-100);
+    padding: 2.5rem 0 2rem;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .logo-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-500);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .doc-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-500);
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-bottom: 0.75rem;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--gray-500);
+    max-width: 520px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    margin: 2rem 0 0;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: var(--gray-700);
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Summary bar */
+  .summary-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin: 2rem 0;
+  }
+
+  .summary-cell {
+    background: var(--white);
+    padding: 1rem 1.25rem;
+    text-align: center;
+  }
+
+  .summary-num {
+    font-size: 1.75rem;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .summary-label {
+    font-size: 12px;
+    color: var(--gray-500);
+  }
+
+  .num-ok { color: var(--success); }
+  .num-warn { color: var(--warn); }
+  .num-danger { color: var(--danger); }
+
+  /* Section */
+  .section {
+    margin: 2.5rem 0;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gray-500);
+  }
+
+  .section-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-300);
+  }
+
+  /* Component grid */
+  .comp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 8px;
+  }
+
+  .comp-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-100);
+    background: var(--white);
+    transition: border-color 0.15s;
+  }
+
+  .comp-card:hover { border-color: var(--gray-300); }
+
+  .comp-card.status-missing {
+    border-color: #fcd9a0;
+    background: var(--warn-light);
+  }
+
+  .comp-card.status-priority {
+    border-color: #f5b8b8;
+    background: var(--danger-light);
+  }
+
+  .comp-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 15px;
+  }
+
+  .icon-ok { background: var(--success-light); color: var(--success); }
+  .icon-missing { background: var(--warn-light); color: var(--warn); }
+  .icon-priority { background: var(--danger-light); color: var(--danger); }
+
+  .comp-body { flex: 1; min-width: 0; }
+
+  .comp-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--black);
+    margin-bottom: 2px;
+  }
+
+  .comp-note {
+    font-size: 12px;
+    color: var(--gray-500);
+    line-height: 1.4;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 5px;
+    letter-spacing: 0.02em;
+  }
+
+  .badge-ok { background: var(--success-light); color: var(--success); }
+  .badge-missing { background: var(--warn-light); color: var(--warn); }
+  .badge-priority { background: var(--danger-light); color: var(--danger); }
+
+  /* Priority block */
+  .priority-block {
+    background: var(--gray-50);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin: 2.5rem 0;
+    border: 1px solid var(--gray-100);
+  }
+
+  .priority-title {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: var(--black);
+  }
+
+  .priority-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .priority-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--white);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-100);
+  }
+
+  .priority-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-300);
+    min-width: 18px;
+    padding-top: 1px;
+  }
+
+  .priority-content {}
+
+  .priority-name {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+
+  .priority-why {
+    font-size: 12px;
+    color: var(--gray-500);
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--gray-100);
+    padding: 2rem 0;
+    margin-top: 3rem;
+  }
+
+  .footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-note {
+    font-size: 12px;
+    color: var(--gray-500);
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    h1 { font-size: 1.5rem; }
+    .comp-grid { grid-template-columns: 1fr; }
+    .summary-bar { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media print {
+    body { background: white; }
+    .comp-card:hover { border-color: var(--gray-100); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-top">
+      <div class="logo-area">
+        <div class="logo-dot"></div>
+        <span class="logo-text">Berners Ads — Design System</span>
+      </div>
+      <span class="doc-meta">Auditoría de componentes · Junio 2026</span>
+    </div>
+    <h1>Inventario de componentes DS</h1>
+    <p class="subtitle">Análisis del estado actual del sistema de diseño y gaps prioritarios para un producto SaaS B2B de paid media.</p>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div> Componente existente</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--warn)"></div> Falta o incompleto</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div> Prioritario para el producto</div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="summary-bar">
+    <div class="summary-cell">
+      <div class="summary-num num-ok">22</div>
+      <div class="summary-label">Componentes existentes</div>
+    </div>
+    <div class="summary-cell">
+      <div class="summary-num num-danger">6</div>
+      <div class="summary-label">Prioritarios que faltan</div>
+    </div>
+    <div class="summary-cell">
+      <div class="summary-num num-warn">5</div>
+      <div class="summary-label">Gaps secundarios</div>
+    </div>
+    <div class="summary-cell">
+      <div class="summary-num" style="color:var(--black)">33</div>
+      <div class="summary-label">Total recomendado</div>
+    </div>
+  </div>
+
+  <!-- Priority block -->
+  <div class="priority-block">
+    <p class="priority-title">🔴 Prioritarios — empezar aquí</p>
+    <div class="priority-list">
+      <div class="priority-item">
+        <span class="priority-num">01</span>
+        <div class="priority-content">
+          <div class="priority-name">Badge / Status pill</div>
+          <div class="priority-why">El estado de campaña (activo, pausado, borrador, error) aparece en todas las vistas. Sin este componente cada pantalla lo resuelve diferente.</div>
+        </div>
+      </div>
+      <div class="priority-item">
+        <span class="priority-num">02</span>
+        <div class="priority-content">
+          <div class="priority-name">Skeleton / Loading state</div>
+          <div class="priority-why">Momento de máxima ansiedad del usuario — sin datos visibles. Imprescindible en un producto con dashboards y métricas en tiempo real.</div>
+        </div>
+      </div>
+      <div class="priority-item">
+        <span class="priority-num">03</span>
+        <div class="priority-content">
+          <div class="priority-name">Empty state</div>
+          <div class="priority-why">Sin campañas, sin datos, primer uso. Un empty state bien diseñado guía al usuario hacia la acción correcta. Sin él, la app parece rota.</div>
+        </div>
+      </div>
+      <div class="priority-item">
+        <span class="priority-num">04</span>
+        <div class="priority-content">
+          <div class="priority-name">Stepper / Steps</div>
+          <div class="priority-why">El flujo de creación de campaña tiene varios pasos diferenciados. Sin un stepper claro el usuario pierde el contexto de dónde está.</div>
+        </div>
+      </div>
+      <div class="priority-item">
+        <span class="priority-num">05</span>
+        <div class="priority-content">
+          <div class="priority-name">Stat / KPI card</div>
+          <div class="priority-why">Número grande + tendencia + delta porcentual. Componente nuclear para dashboards de rendimiento de campañas.</div>
+        </div>
+      </div>
+      <div class="priority-item">
+        <span class="priority-num">06</span>
+        <div class="priority-content">
+          <div class="priority-name">Charts (line, bar, donut)</div>
+          <div class="priority-why">Visualización de métricas de campañas. Definir los tokens de color y estilo para que todas las gráficas sean coherentes entre sí.</div>
+        </div>
+      </div>
+      <div class="priority-item">
+        <span class="priority-num">07</span>
+        <div class="priority-content">
+          <div class="priority-name">Top bar / Header de app</div>
+          <div class="priority-why">Con avatar, notificaciones y contexto de cuenta/marca. Marco estructural de la app que afecta a todas las pantallas.</div>
+        </div>
+      </div>
+      <div class="priority-item">
+        <span class="priority-num">08</span>
+        <div class="priority-content">
+          <div class="priority-name">Input numérico / moneda</div>
+          <div class="priority-why">Crítico para la entrada de presupuestos de campaña. Necesita manejo específico: formato, límites, validación inline.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Foundations y navegación -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Foundations y navegación</span>
+      <span class="section-count">6 componentes</span>
+    </div>
+    <div class="comp-grid">
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">→</div>
+        <div class="comp-body">
+          <div class="comp-name">Breadcrumbs</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">↔</div>
+        <div class="comp-body">
+          <div class="comp-name">Menu</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">⊟</div>
+        <div class="comp-body">
+          <div class="comp-name">Tabs</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">⋮</div>
+        <div class="comp-body">
+          <div class="comp-name">Pagination</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card status-priority">
+        <div class="comp-icon icon-priority">▣</div>
+        <div class="comp-body">
+          <div class="comp-name">Top bar / Header de app</div>
+          <div class="comp-note">Con avatar, notificaciones, contexto de cuenta</div>
+          <span class="badge badge-priority">prioritario</span>
+        </div>
+      </div>
+      <div class="comp-card status-priority">
+        <div class="comp-icon icon-priority">→</div>
+        <div class="comp-body">
+          <div class="comp-name">Sidebar / Nav lateral</div>
+          <div class="comp-note">Navegación principal de la app</div>
+          <span class="badge badge-priority">prioritario</span>
+        </div>
+      </div>
+      <div class="comp-card status-priority">
+        <div class="comp-icon icon-priority">⑃</div>
+        <div class="comp-body">
+          <div class="comp-name">Stepper / Steps</div>
+          <div class="comp-note">Para flujos multipaso como crear campaña</div>
+          <span class="badge badge-priority">prioritario</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formularios -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Formularios y entrada de datos</span>
+      <span class="section-count">10 componentes</span>
+    </div>
+    <div class="comp-grid">
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">⊞</div>
+        <div class="comp-body">
+          <div class="comp-name">Form / Input / Fieldset</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">✓</div>
+        <div class="comp-body">
+          <div class="comp-name">Checkbox</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">◎</div>
+        <div class="comp-body">
+          <div class="comp-name">Radio</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">⊙</div>
+        <div class="comp-body">
+          <div class="comp-name">Switch</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">▦</div>
+        <div class="comp-body">
+          <div class="comp-name">Calendar / Date Picker</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">∨</div>
+        <div class="comp-body">
+          <div class="comp-name">Popover / Select</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">⌕</div>
+        <div class="comp-body">
+          <div class="comp-name">Search</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">⊟</div>
+        <div class="comp-body">
+          <div class="comp-name">Slider</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">↑</div>
+        <div class="comp-body">
+          <div class="comp-name">Upload</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card status-priority">
+        <div class="comp-icon icon-priority">€</div>
+        <div class="comp-body">
+          <div class="comp-name">Input numérico / moneda</div>
+          <div class="comp-note">Crítico para presupuestos de campaña</div>
+          <span class="badge badge-priority">prioritario</span>
+        </div>
+      </div>
+      <div class="comp-card status-missing">
+        <div class="comp-icon icon-missing">⊕</div>
+        <div class="comp-body">
+          <div class="comp-name">Input con tags</div>
+          <div class="comp-note">Para añadir keywords, audiencias</div>
+          <span class="badge badge-missing">falta</span>
+        </div>
+      </div>
+      <div class="comp-card status-missing">
+        <div class="comp-icon icon-missing">▽</div>
+        <div class="comp-body">
+          <div class="comp-name">Color Picker</div>
+          <div class="comp-note">Ya existente, revisar escalabilidad</div>
+          <span class="badge badge-missing">revisar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Datos y visualización -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Datos y visualización</span>
+      <span class="section-count">6 componentes</span>
+    </div>
+    <div class="comp-grid">
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">⊞</div>
+        <div class="comp-body">
+          <div class="comp-name">Table</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">▬</div>
+        <div class="comp-body">
+          <div class="comp-name">Progress Bar</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">⌚</div>
+        <div class="comp-body">
+          <div class="comp-name">Timeline</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card status-priority">
+        <div class="comp-icon icon-priority">↗</div>
+        <div class="comp-body">
+          <div class="comp-name">Stat / KPI card</div>
+          <div class="comp-note">Número grande + tendencia + delta %</div>
+          <span class="badge badge-priority">prioritario</span>
+        </div>
+      </div>
+      <div class="comp-card status-priority">
+        <div class="comp-icon icon-priority">〜</div>
+        <div class="comp-body">
+          <div class="comp-name">Charts (line, bar, donut)</div>
+          <div class="comp-note">Tokens de color y estilo para métricas</div>
+          <span class="badge badge-priority">prioritario</span>
+        </div>
+      </div>
+      <div class="comp-card status-missing">
+        <div class="comp-icon icon-missing">⊤</div>
+        <div class="comp-body">
+          <div class="comp-name">Table sorting / filters</div>
+          <div class="comp-note">Patrón para tablas de campañas</div>
+          <span class="badge badge-missing">falta</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feedback -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Feedback y estados</span>
+      <span class="section-count">7 componentes</span>
+    </div>
+    <div class="comp-grid">
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">!</div>
+        <div class="comp-body">
+          <div class="comp-name">Alerts</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">🔔</div>
+        <div class="comp-body">
+          <div class="comp-name">Toast / Notification</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">?</div>
+        <div class="comp-body">
+          <div class="comp-name">Tooltip</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">⊡</div>
+        <div class="comp-body">
+          <div class="comp-name">Modal</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card status-priority">
+        <div class="comp-icon icon-priority">⟳</div>
+        <div class="comp-body">
+          <div class="comp-name">Loading / Skeleton</div>
+          <div class="comp-note">Estados de carga de datos y dashboards</div>
+          <span class="badge badge-priority">prioritario</span>
+        </div>
+      </div>
+      <div class="comp-card status-priority">
+        <div class="comp-icon icon-priority">○</div>
+        <div class="comp-body">
+          <div class="comp-name">Empty state</div>
+          <div class="comp-note">Sin campañas, sin datos, primer uso</div>
+          <span class="badge badge-priority">prioritario</span>
+        </div>
+      </div>
+      <div class="comp-card status-missing">
+        <div class="comp-icon icon-missing">⚠</div>
+        <div class="comp-body">
+          <div class="comp-name">Error state / 404</div>
+          <div class="comp-note">Pantallas de error de la app</div>
+          <span class="badge badge-missing">falta</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Acciones y elementos -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Acciones y elementos</span>
+      <span class="section-count">8 componentes</span>
+    </div>
+    <div class="comp-grid">
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">▶</div>
+        <div class="comp-body">
+          <div class="comp-name">Button</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">◈</div>
+        <div class="comp-body">
+          <div class="comp-name">Avatar</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">▣</div>
+        <div class="comp-body">
+          <div class="comp-name">Cards</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card">
+        <div class="comp-icon icon-ok">⊕</div>
+        <div class="comp-body">
+          <div class="comp-name">Chips</div>
+          <span class="badge badge-ok">✓ existente</span>
+        </div>
+      </div>
+      <div class="comp-card status-priority">
+        <div class="comp-icon icon-priority">●</div>
+        <div class="comp-body">
+          <div class="comp-name">Badge / Status pill</div>
+          <div class="comp-note">Activo, pausado, borrador, error…</div>
+          <span class="badge badge-priority">prioritario</span>
+        </div>
+      </div>
+      <div class="comp-card status-missing">
+        <div class="comp-icon icon-missing">⋮</div>
+        <div class="comp-body">
+          <div class="comp-name">Action menu (kebab)</div>
+          <div class="comp-note">Editar, duplicar, archivar campaña</div>
+          <span class="badge badge-missing">falta</span>
+        </div>
+      </div>
+      <div class="comp-card status-missing">
+        <div class="comp-icon icon-missing">⊟</div>
+        <div class="comp-body">
+          <div class="comp-name">Filter bar</div>
+          <div class="comp-note">Filtros de campañas, fechas, canales</div>
+          <span class="badge badge-missing">falta</span>
+        </div>
+      </div>
+      <div class="comp-card status-missing">
+        <div class="comp-icon icon-missing">⊞</div>
+        <div class="comp-body">
+          <div class="comp-name">Scrollbar</div>
+          <div class="comp-note">Ya existe, verificar consistencia</div>
+          <span class="badge badge-missing">revisar</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <span class="footer-note">Berners Ads Design System · Generado Junio 2026</span>
+      <span class="footer-note">Para uso interno del equipo de producto</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
